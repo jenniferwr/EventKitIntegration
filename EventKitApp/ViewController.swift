@@ -28,12 +28,6 @@ class ViewController: UIViewController, EKEventViewDelegate, UINavigationControl
         super.viewDidLoad()
         // Do any additional setup after loading the view.
 
-        //let toolBarItems = [UIBarButtonItem(title: "dismiss", style: .done, target: self, action: #selector(dismissCalForm))]
-
-//        self.navigationController?.delegate = self
-//        self.navigationController?.navigationBar.barTintColor = .red
-
-        self.view.backgroundColor = .gray
         // add button to the subview
         self.view.addSubview(button)
 
@@ -82,25 +76,11 @@ class ViewController: UIViewController, EKEventViewDelegate, UINavigationControl
     }
 
     @objc func presentCalForm() {
-//        let toolBarItems = [UIBarButtonItem(title: "dismiss", style: .done, target: self, action: #selector(dismissCalForm))]
         let eventViewController = EKEventViewController()
         eventViewController.allowsCalendarPreview = true
-//        eventViewController.allowsEditing = true
         eventViewController.event = createNewEvent()
         eventViewController.delegate = self
         eventViewController.dismiss(animated: true, completion: nil)
-        eventViewController.view.backgroundColor = .red
-
-        eventViewController.navigationItem.setLeftBarButton(UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.done, target: nil, action: #selector(dismissCalForm(sender:))), animated: true)
-//        eventViewController.canPerformAction(#selector(dismissCalForm), withSender: self)
-//        eventViewController.navigationItem.backBarButtonItem = .init(title: "dismiss", style: .done, target: eventViewController, action: #selector(dismissCalForm))
-//        eventViewController.navigationItem.backBarButtonItem?.isEnabled = true
-//        eventViewController.navigationItem.hidesBackButton = false
-//        eventViewController.navigationController?.toolbar.barTintColor = .red
-//        eventViewController.navigationController?.setToolbarItems(toolBarItems, animated: true)
-//        eventViewController.navigationController?.toolbarItems = toolBarItems
-//        eventViewController.navigationController?.isToolbarHidden = false
-//        eventViewController.navigationController?.delegate = self
         eventViewController.modalPresentationStyle = .overFullScreen
 
         let navBar = UINavigationBar(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 100))
@@ -134,11 +114,9 @@ class ViewController: UIViewController, EKEventViewDelegate, UINavigationControl
         do {
             try store.save(calEvent, span: .thisEvent)
             print("saved event")
-//            presentAlert(for: "saved event")
 
         } catch let error as NSError {
             print("failed to save event: \(error)")
-//            presentAlert(for: "failed to save event")
         }
         return calEvent
     }
