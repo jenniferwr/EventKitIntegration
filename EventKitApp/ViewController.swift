@@ -10,9 +10,10 @@ import UIKit
 import EventKit
 import EventKitUI
 
-class ViewController: UIViewController {
-    public static let store = EKEventStore()
-    public let modalCalForm = CalendarEventFormViewController()
+class ViewController: UIViewController, EKEventViewDelegate, UINavigationControllerDelegate {
+
+    public let store = EKEventStore()
+    public let editEventViewController = EKEventEditViewController(nibName: nil, bundle: nil)
 
     lazy var button:UIButton = {
         let button = UIButton(frame: CGRect(origin: CGPoint(x: 100, y: 400), size: CGSize(width: 200, height: 50)))
@@ -23,9 +24,16 @@ class ViewController: UIViewController {
     }()
 
     override func viewDidLoad() {
+
         super.viewDidLoad()
         // Do any additional setup after loading the view.
 
+        //let toolBarItems = [UIBarButtonItem(title: "dismiss", style: .done, target: self, action: #selector(dismissCalForm))]
+
+//        self.navigationController?.delegate = self
+//        self.navigationController?.navigationBar.barTintColor = .red
+
+        self.view.backgroundColor = .gray
         // add button to the subview
         self.view.addSubview(button)
 
@@ -35,8 +43,6 @@ class ViewController: UIViewController {
     }
 
     func checkEventPermissions() {
-        print("calling... checkEventPermissions")
-
         let permissionStatus = EKEventStore.authorizationStatus(for: .event)
         switch permissionStatus {
         case EKAuthorizationStatus.authorized:
@@ -64,9 +70,7 @@ class ViewController: UIViewController {
     }
 
     func requestEventStorePermission() {
-        print("calling... requestEventStorePermission")
-
-        ViewController.store.requestAccess(to: .event,
+        store.requestAccess(to: .event,
                             completion: { granted, error in
                                 if !granted {
                                     print("permission to access calendar denied")
@@ -78,7 +82,129 @@ class ViewController: UIViewController {
     }
 
     @objc func presentCalForm() {
-        self.present(modalCalForm, animated: true, completion: nil)
+//        let toolBarItems = [UIBarButtonItem(title: "dismiss", style: .done, target: self, action: #selector(dismissCalForm))]
+        let eventViewController = EKEventViewController()
+        eventViewController.allowsCalendarPreview = true
+//        eventViewController.allowsEditing = true
+        eventViewController.event = createNewEvent()
+        eventViewController.delegate = self
+        eventViewController.dismiss(animated: true, completion: nil)
+        eventViewController.view.backgroundColor = .red
+
+        eventViewController.navigationItem.setLeftBarButton(UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.done, target: nil, action: #selector(dismissCalForm(sender:))), animated: true)
+//        eventViewController.canPerformAction(#selector(dismissCalForm), withSender: self)
+//        eventViewController.navigationItem.backBarButtonItem = .init(title: "dismiss", style: .done, target: eventViewController, action: #selector(dismissCalForm))
+//        eventViewController.navigationItem.backBarButtonItem?.isEnabled = true
+//        eventViewController.navigationItem.hidesBackButton = false
+//        eventViewController.navigationController?.toolbar.barTintColor = .red
+//        eventViewController.navigationController?.setToolbarItems(toolBarItems, animated: true)
+//        eventViewController.navigationController?.toolbarItems = toolBarItems
+//        eventViewController.navigationController?.isToolbarHidden = false
+//        eventViewController.navigationController?.delegate = self
+        eventViewController.modalPresentationStyle = .overFullScreen
+
+        let navBar = UINavigationBar(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 100))
+        eventViewController.view.addSubview(navBar)
+
+        let navItem = UINavigationItem(title: "SomeTitle")
+        let doneItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.done, target: nil, action: #selector(dismissCalForm(sender:)))
+        navItem.rightBarButtonItem = doneItem
+
+        navBar.setItems([navItem], animated: false)
+        self.navigationController?.pushViewController(eventViewController, animated: true)
+        self.present(eventViewController, animated: true, completion: nil)
+    }
+
+    @objc func dismissCalForm(sender: UIBarButtonItem!) {
+        self.dismiss(animated: true, completion: nil)
+    }
+
+    func createNewEvent() -> EKEvent {
+
+        // make event
+        let calEvent = EKEvent(eventStore: store)
+        calEvent.title = "Event Title"
+        calEvent.location = "123 Blueberry Lane"
+        calEvent.startDate = Date()
+        calEvent.endDate = Date(timeInterval: 3600, since: calEvent.startDate)
+        calEvent.availability = .busy
+        calEvent.calendar = createSpecialCalendarIfNeeded(for: "Event Calendar")
+        calEvent.notes = "Here is the description"
+
+        do {
+            try store.save(calEvent, span: .thisEvent)
+            print("saved event")
+//            presentAlert(for: "saved event")
+
+        } catch let error as NSError {
+            print("failed to save event: \(error)")
+//            presentAlert(for: "failed to save event")
+        }
+        return calEvent
+    }
+
+    func createSpecialCalendarIfNeeded(for calendarTitle: String) -> EKCalendar? {
+        var cal = EKCalendar(for: .event, eventStore: store)
+
+        // check if cal already exists
+        var calendarExists = false
+        store.calendars(for: .event).forEach { calendar in
+            if calendar.title == calendarTitle {
+                calendarExists = true
+                cal = calendar
+            }
+        }
+
+        if !calendarExists {
+            cal = EKCalendar(for: .event, eventStore: store)
+            let calendarTitle = String("Event Calendar")
+            cal.title = calendarTitle
+
+            cal.source = store.sources.filter{
+                (source: EKSource) -> Bool in
+                source.sourceType.rawValue == EKSourceType.local.rawValue
+                }.first!
+
+            do {
+                try store.saveCalendar(cal, commit: true)
+                print("saved cal")
+                return cal
+            } catch {
+                print("failed to save cal")
+//                presentAlert(for: "failed to save cal")
+                return nil
+            }
+        }
+
+        print("cal.title: \(cal.title)")
+        return cal
+    }
+
+    func eventViewController(_ controller: EKEventViewController, didCompleteWith action: EKEventViewAction) {
+        print("eventViewController")
+        switch action {
+        case EKEventViewAction.done:
+            self.dismiss(animated: true, completion: nil)
+        default:
+            print("in default")
+        }
+    }
+
+    func eventEditViewController(_ controller: EKEventEditViewController, didCompleteWith action: EKEventEditViewAction) {
+        self.dismiss(animated: true, completion: nil)
+        switch action {
+        case .saved:
+            print("saved")
+            break
+        case .canceled:
+            print("canceled")
+            break
+        case.deleted:
+            print("deleted")
+            break
+        default:
+            print("default")
+        }
     }
 
 
