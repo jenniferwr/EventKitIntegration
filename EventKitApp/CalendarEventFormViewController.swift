@@ -133,7 +133,6 @@ class CalendarEventFormViewController: UIViewController, UIPickerViewDelegate, U
                 print("failed to save cal")
                 presentAlert(for: "failed to save cal")
                 return nil
-                // to do: pop up error message here
             }
         }
 
