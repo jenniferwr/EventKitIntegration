@@ -14,6 +14,7 @@
 		0F7CF4B422D62621003B79E6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0F7CF4B222D62621003B79E6 /* LaunchScreen.storyboard */; };
 		0F7CF4BF22D62621003B79E6 /* EventKitAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F7CF4BE22D62621003B79E6 /* EventKitAppTests.swift */; };
 		0F7CF4CA22D62621003B79E6 /* EventKitAppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F7CF4C922D62621003B79E6 /* EventKitAppUITests.swift */; };
+		0F7CF4D822D65CA7003B79E6 /* CalendarEventFormViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F7CF4D722D65CA7003B79E6 /* CalendarEventFormViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,6 +48,7 @@
 		0F7CF4C522D62621003B79E6 /* EventKitAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EventKitAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0F7CF4C922D62621003B79E6 /* EventKitAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventKitAppUITests.swift; sourceTree = "<group>"; };
 		0F7CF4CB22D62621003B79E6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		0F7CF4D722D65CA7003B79E6 /* CalendarEventFormViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarEventFormViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +105,7 @@
 				0F7CF4B022D62621003B79E6 /* Assets.xcassets */,
 				0F7CF4B222D62621003B79E6 /* LaunchScreen.storyboard */,
 				0F7CF4B522D62621003B79E6 /* Info.plist */,
+				0F7CF4D722D65CA7003B79E6 /* CalendarEventFormViewController.swift */,
 			);
 			path = EventKitApp;
 			sourceTree = "<group>";
@@ -258,6 +261,7 @@
 			files = (
 				0F7CF4AC22D6261F003B79E6 /* ViewController.swift in Sources */,
 				0F7CF4AA22D6261F003B79E6 /* AppDelegate.swift in Sources */,
+				0F7CF4D822D65CA7003B79E6 /* CalendarEventFormViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

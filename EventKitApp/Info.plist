@@ -41,5 +41,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCalendarsUsageDescription</key>
+	<string>This allows EventKitApp to make changes to your calendar.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>This allows EventKitApp to make changes to your reminders.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>This allows EventKitApp to make changes to your contacts.</string>
 </dict>
 </plist>
