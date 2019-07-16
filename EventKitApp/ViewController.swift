@@ -10,57 +10,125 @@ import UIKit
 import EventKit
 import EventKitUI
 
-class ViewController: UIViewController, EKEventViewDelegate, UINavigationControllerDelegate {
+class ViewController: UIViewController, EKEventViewDelegate, EKEventEditViewDelegate, EKCalendarChooserDelegate {
 
+    /// Mark - Properties
     public let store = EKEventStore()
-    public let editEventViewController = EKEventEditViewController(nibName: nil, bundle: nil)
 
-    lazy var button:UIButton = {
-        let button = UIButton(frame: CGRect(origin: CGPoint(x: 100, y: 400), size: CGSize(width: 200, height: 50)))
+    /// MARK - UIButtons
+
+    lazy var button0: UIButton = {
+        let button = UIButton(frame: CGRect(origin: CGPoint(x: 100, y: 300), size: CGSize(width: 200, height: 50)))
         button.backgroundColor = .blue
-        button.setTitle("Create Cal Event", for: UIControl.State.normal)
-        button.addTarget(self, action: #selector(presentCalForm), for: UIControl.Event.touchUpInside)
+        button.setTitle("View Cal Event", for: UIControl.State.normal)
+        button.addTarget(self, action: #selector(presentViewCalEvent), for: UIControl.Event.touchUpInside)
         return button
     }()
 
-    override func viewDidLoad() {
+    lazy var button: UIButton = {
+        let button = UIButton(frame: CGRect(origin: CGPoint(x: 100, y: 400), size: CGSize(width: 200, height: 50)))
+        button.backgroundColor = .blue
+        button.setTitle("Create Cal Event", for: UIControl.State.normal)
+        button.addTarget(self, action: #selector(presentEditCal), for: UIControl.Event.touchUpInside)
+        return button
+    }()
 
-        super.viewDidLoad()
-        // Do any additional setup after loading the view.
+    lazy var button2: UIButton = {
+        let button = UIButton(frame: CGRect(origin: CGPoint(x: 100, y:500), size: CGSize(width: 200, height: 50)))
+        button.backgroundColor = .blue
+        button.setTitle("Choose Cal", for: UIControl.State.normal)
+        button.addTarget(self, action: #selector(chooseCal), for: UIControl.Event.touchUpInside)
+        return button
+    }()
 
-        // add button to the subview
-        self.view.addSubview(button)
-
+    override func viewDidAppear(_ animated: Bool) {
         // check permissions
         checkEventPermissions()
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        // add buttons to the view
+        self.view.addSubview(button0)
+        self.view.addSubview(button)
+        self.view.addSubview(button2)
 
     }
+
+    /// MARK - Selectors
+
+    @objc func chooseCal(_ sender: Any) {
+        let calChooser = EKCalendarChooser(
+            selectionStyle: .single,
+            displayStyle: .writableCalendarsOnly,
+            eventStore: store)
+        calChooser.showsDoneButton = true
+        calChooser.showsCancelButton = true
+        calChooser.delegate = self
+        calChooser.navigationItem.prompt = "Pick a calendar to add the event to:"
+        let nav = UINavigationController(rootViewController: calChooser)
+        nav.modalPresentationStyle = .popover
+        self.present(nav, animated: true)
+        if let pop = nav.popoverPresentationController {
+            if let myView = sender as? UIView {
+                pop.sourceView = myView
+                pop.sourceRect = myView.bounds
+            }
+        }
+    }
+
+    @objc func presentEditCal(_ sender: Any) {
+        let editCalVC = EKEventEditViewController()
+        editCalVC.eventStore = store
+        editCalVC.editViewDelegate = self
+        editCalVC.modalPresentationStyle = .popover
+        self.present(editCalVC, animated: true)
+        if let pop = editCalVC.popoverPresentationController {
+            if let myView = sender as? UIView {
+                pop.sourceView = myView
+                pop.sourceRect = myView.bounds
+            }
+        }
+    }
+
+    @objc func presentViewCalEvent(_ sender: Any) {
+        let newEvent = createNewEvent()
+        let eventVC = EKEventViewController()
+        eventVC.event = newEvent
+        eventVC.allowsEditing = true
+        eventVC.delegate = self
+        eventVC.navigationItem.prompt = "This is the event"
+        let nav = UINavigationController(rootViewController: eventVC)
+        nav.modalPresentationStyle = .popover
+        self.present(nav, animated: true)
+        if let pop = nav.popoverPresentationController {
+            if let myView = sender as? UIView {
+                pop.sourceView = myView
+                pop.sourceRect = myView.bounds
+            }
+        }
+    }
+
+    /// MARK - Helper functions
 
     func checkEventPermissions() {
         let permissionStatus = EKEventStore.authorizationStatus(for: .event)
         switch permissionStatus {
         case EKAuthorizationStatus.authorized:
-             button.isHidden = false
+            presentAlert(for: "Thanks for allowing us access to your calendar!")
             break
         case EKAuthorizationStatus.notDetermined:
-            button.isHidden = true
             requestEventStorePermission()
             break
         case EKAuthorizationStatus.denied,
              EKAuthorizationStatus.restricted:
             fallthrough
         @unknown default:
-            button.isHidden = true
+            presentAlert(for: "You denied EventKitApp access to your calendar, inorder to make changes to your calendar please allow access.")
+            requestEventStorePermission()
             break
         }
-    }
-
-    func presentAlert(for message: String) {
-        let alert = UIAlertController(title: "My Alert", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "Default action"), style: .default, handler: { _ in
-            NSLog("The \"OK\" alert occured.")
-        }))
-        self.present(alert, animated: true, completion: nil)
     }
 
     func requestEventStorePermission() {
@@ -73,34 +141,10 @@ class ViewController: UIViewController, EKEventViewDelegate, UINavigationControl
                                 }
 
         })
-    }
-
-    @objc func presentCalForm() {
-        let eventViewController = EKEventViewController()
-        eventViewController.allowsCalendarPreview = true
-        eventViewController.event = createNewEvent()
-        eventViewController.delegate = self
-        eventViewController.dismiss(animated: true, completion: nil)
-        eventViewController.modalPresentationStyle = .overFullScreen
-
-        let navBar = UINavigationBar(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 100))
-        eventViewController.view.addSubview(navBar)
-
-        let navItem = UINavigationItem(title: "SomeTitle")
-        let doneItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.done, target: nil, action: #selector(dismissCalForm(sender:)))
-        navItem.rightBarButtonItem = doneItem
-
-        navBar.setItems([navItem], animated: false)
-        self.navigationController?.pushViewController(eventViewController, animated: true)
-        self.present(eventViewController, animated: true, completion: nil)
-    }
-
-    @objc func dismissCalForm(sender: UIBarButtonItem!) {
-        self.dismiss(animated: true, completion: nil)
+        store.reset()
     }
 
     func createNewEvent() -> EKEvent {
-
         // make event
         let calEvent = EKEvent(eventStore: store)
         calEvent.title = "Event Title"
@@ -119,6 +163,14 @@ class ViewController: UIViewController, EKEventViewDelegate, UINavigationControl
             print("failed to save event: \(error)")
         }
         return calEvent
+    }
+
+    func presentAlert(for message: String) {
+        let alert = UIAlertController(title: "My Alert", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "Default action"), style: .default, handler: { _ in
+            NSLog("The \"OK\" alert occured.")
+        }))
+        self.present(alert, animated: true, completion: nil)
     }
 
     func createSpecialCalendarIfNeeded(for calendarTitle: String) -> EKCalendar? {
@@ -149,7 +201,6 @@ class ViewController: UIViewController, EKEventViewDelegate, UINavigationControl
                 return cal
             } catch {
                 print("failed to save cal")
-//                presentAlert(for: "failed to save cal")
                 return nil
             }
         }
@@ -158,33 +209,29 @@ class ViewController: UIViewController, EKEventViewDelegate, UINavigationControl
         return cal
     }
 
-    func eventViewController(_ controller: EKEventViewController, didCompleteWith action: EKEventViewAction) {
-        print("eventViewController")
-        switch action {
-        case EKEventViewAction.done:
-            self.dismiss(animated: true, completion: nil)
-        default:
-            print("in default")
-        }
+    /// MARK - EKCalendarChooserDelegate functions
+
+    func calendarChooserDidCancel(_ choo: EKCalendarChooser) {
+        self.dismiss(animated:true)
     }
+
+    func calendarChooserDidFinish(_ choo: EKCalendarChooser) {
+        self.dismiss(animated:true)
+    }
+
+    /// MARK - EKEventEditViewDelegate functions
 
     func eventEditViewController(_ controller: EKEventEditViewController, didCompleteWith action: EKEventEditViewAction) {
-        self.dismiss(animated: true, completion: nil)
-        switch action {
-        case .saved:
-            print("saved")
-            break
-        case .canceled:
-            print("canceled")
-            break
-        case.deleted:
-            print("deleted")
-            break
-        default:
-            print("default")
-        }
+        print("edit event completed with action \(action.rawValue)")
+        self.dismiss(animated: true)
     }
 
+    /// MARK - EKEventViewDelegate functions
+
+    func eventViewController(_ controller: EKEventViewController, didCompleteWith action: EKEventViewAction) {
+        print("view event completed with action \(action.rawValue)")
+        self.dismiss(animated: true)
+    }
 
 }
 
